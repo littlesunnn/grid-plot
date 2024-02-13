@@ -269,6 +269,7 @@ import Text from "@/features/basic-shape/Text";
 import Feature from "@/features/Feature";
 import SelectArea from "@/features/function-shape/SelectArea";
 import GridLine from "@/GridLine";
+import { randomNum } from "@/utils";
 import { message } from "ant-design-vue";
 import { onMounted, reactive, ref, toRef, toRefs } from "vue";
 import { DrawAreaMode } from "../Constants";
@@ -463,10 +464,14 @@ function reset() {
     gls = new GridSystem(canvasDom);
     setCanvasSize(canvasDom);
     startTime(gls as GridSystem);
-    gls.addFeature(new Feature([
-        {x: 100, y: 100},
-        {x: 200, y: 200},
-    ]))
+    
+    for (let index = 0; index < 1000; index++) {
+        gls.addFeature(new Feature([
+            { x: randomNum(0,1000), y: randomNum(0,1000) },
+            { x: randomNum(0,1000), y: randomNum(0,1000) },
+        ]))
+    }
+
 }
 
 function linkTo(url: string) {

@@ -31,6 +31,8 @@ class GridSystem {
     className = 'GridSystem';
     scale: number = 10;
     angle: number = 0;
+    scale2 = 1;
+    scale3 = 1;
     pageSlicePos: IPoint = {
         x: 200,
         y: 200,
@@ -94,17 +96,30 @@ class GridSystem {
     }
 
     draw(loop = true, fn?: Function) {
+        console.time();
+        this.ctx.save();
+        this.ctx.scale(100,100)
+        this.ctx.translate(-this.pageSlicePos.x, -this.pageSlicePos.y)
         this.ctx.fillStyle = this.backgroundColor;
         this.ctx.fillRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
-        // this.ctx.rotate(30 * Math.PI/180)
+        // this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
+        this.ctx.restore();
+        // this.ctx.rotate(30 * Math.PI/180)      
         fn && fn()
+        this.ctx.translate(this.pageSlicePos.x, this.pageSlicePos.y)
+        this.ctx.scale(this.scale2, this.scale2)
         this.drawFeatures();
-        this.ctx.fillStyle = "red"
-        this.ctx.fillRect(this.test.x, this.test.y, 5, 5);
+        this.scale2 = 1;
+        // this.ctx.fillStyle = "red"
+        // this.ctx.fillRect(this.test.x, this.test.y, 5, 5);
         // this.ctx.rotate(-30 * Math.PI/180)
+        console.log(this.scale3);
+        
+        this.ctx.translate(-this.pageSlicePos.x, -this.pageSlicePos.y)
         if (loop) {  // 是否循环渲染
             this.timer = window.requestAnimationFrame(() => this.draw(loop, fn))
         }
+        console.timeEnd();
     };
 
     // --------------------以下是私有的方法----------------------------
@@ -112,7 +127,7 @@ class GridSystem {
     drawFeatures(features: Feature[] = this.features) {
         features.forEach(f => {
             if (f.hidden) return;
-            let pointArr = f.pointArr.map(p => this.getPixelPos(p, f.isFixedPos))
+            let pointArr = f.pointArr
             if (!this.cbDrawMiniFeature) {  // 是否渲染太小的元素，因为画布缩放的原因
                 let [minX, maxX, minY, maxY] = f.getRectWrapExtent(pointArr);
                 if (Math.abs(maxX - minX) < 30 && Math.abs(maxY - minY) < 30) {
@@ -452,24 +467,31 @@ class GridSystem {
         // let lastPageSlicePos = this.pageSlicePos
         this.onzoom && this.onzoom(e);
         e.preventDefault();
-        let { x, y } = getMousePos(this.dom, e);
-        if (e.wheelDelta > 0) {
-            let nextScale = scale || this.scale + CoordinateSystem.SCALE_ABILITY
-            if (nextScale > CoordinateSystem.MAX_SCALESIZE) {
-                this.scale = CoordinateSystem.MAX_SCALESIZE
-            } else {
-                this.scale = nextScale;
-                this.back2center(x, y, lastgridSize);
-            }
-        } else {
-            let nextScale = scale || this.scale - CoordinateSystem.SCALE_ABILITY
-            if (nextScale < CoordinateSystem.MIN_SCALESIZE) {
-                this.scale = CoordinateSystem.MIN_SCALESIZE
-            } else {
-                this.scale = nextScale;
-                this.back2center(x, y, lastgridSize);
-            }
-        }
+        // let { x, y } = getMousePos(this.dom, e);
+        // if (e.wheelDelta > 0) {
+        //     let nextScale = scale || this.scale + CoordinateSystem.SCALE_ABILITY
+        //     if (nextScale > CoordinateSystem.MAX_SCALESIZE) {
+        //         this.scale = CoordinateSystem.MAX_SCALESIZE
+        //     } else {
+        //         this.scale = nextScale;
+        //         this.back2center(x, y, lastgridSize);
+        //     }
+        // } else {
+        //     let nextScale = scale || this.scale - CoordinateSystem.SCALE_ABILITY
+        //     if (nextScale < CoordinateSystem.MIN_SCALESIZE) {
+        //         this.scale = CoordinateSystem.MIN_SCALESIZE
+        //     } else {
+        //         this.scale = nextScale;
+        //         this.back2center(x, y, lastgridSize);
+        //     }
+        // }
+        const scaleChange = e.deltaY < 0 ? 0.1 : -0.1;
+        this.scale2 *= Math.pow(2, scaleChange);
+        this.scale2 = Math.min(Math.max(0.125, this.scale2), 4);
+
+        this.scale3 *= Math.pow(2, scaleChange);
+        this.scale3 = Math.min(Math.max(0.125, this.scale3), 4);
+
         document.dispatchEvent(new CustomEvent(Events.MOUSE_WHEEL, { detail: e }));
     };
     // 以鼠标中心点位置去放大
